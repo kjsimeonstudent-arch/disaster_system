@@ -42,8 +42,17 @@ def create_alert(request):
     })
 
 # ================= REPORTS =================
-@api_view(['POST'])
+@api_view(['GET', 'POST'])
 def create_report(request):
+    # GET: return list of reports
+    if request.method == 'GET':
+        reports = Report.objects.all().values()
+        return Response({
+            "status": "success",
+            "data": list(reports)
+        })
+
+    # POST: create a new report
     data = request.data
 
     # DFD Validate
@@ -67,12 +76,38 @@ def create_report(request):
     })
 
 # ================= USERS =================
-@api_view(['GET'])
+@api_view(['GET', 'POST'])
 def get_users(request):
-    # DFD Process
-    users = User.objects.all().values()
+    # GET: return list of users
+    if request.method == 'GET':
+        users = User.objects.all().values()
+        return Response({
+            "status": "success",
+            "data": list(users)
+        })
+
+    # POST: create a new user
+    data = request.data
+    if not data.get('name') or not data.get('role'):
+        return Response({
+            "status": "error",
+            "message": "Missing required fields"
+        })
+
+    valid_roles = dict(User.ROLE_CHOICES).keys()
+    if data.get('role') not in valid_roles:
+        return Response({
+            "status": "error",
+            "message": "Invalid role"
+        })
+
+    user = User.objects.create(
+        name=data.get('name'),
+        role=data.get('role')
+    )
 
     return Response({
         "status": "success",
-        "data": list(users)
+        "message": "User created",
+        "user_id": user.id
     })
